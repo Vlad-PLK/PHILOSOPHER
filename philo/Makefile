@@ -6,13 +6,13 @@
 #    By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/30 13:09:38 by vpolojie          #+#    #+#              #
-#    Updated: 2022/11/30 13:17:00 by vpolojie         ###   ########.fr        #
+#    Updated: 2022/12/08 11:23:37 by vpolojie         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = philo
 
-SRCS = philo.c /
+SRCS = philo.c ft_utils.c
 
 OBJS = ${SRCS:.c=.o}
 
@@ -22,11 +22,11 @@ RM = rm -f
 
 CFLAGS = -Wall -Wextra -Werror
 
-.c.o
-	${CC} ${CFLAGS} -c $< -o ${<:.c=.o}
+.c.o:
+	${CC} -c $< -o ${<:.c=.o}
 
 ${NAME}:	${OBJS}
-				${CC} ${CFLAGS} $^ -o $@
+				${CC} $^ -o $@
 
 all:	${NAME};
 
