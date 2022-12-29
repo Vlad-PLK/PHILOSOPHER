@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/30 13:08:37 by vpolojie          #+#    #+#             */
-/*   Updated: 2022/12/26 17:51:16 by vpolojie         ###   ########.fr       */
+/*   Updated: 2022/12/29 18:57:32 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,24 +27,6 @@ t_phil_args	ft_init_args(int argc, char **argv)
 	return (args);
 }
 
-void	ft_display_args(t_phil_args args)
-{
-	printf("Il y a %d philosophe(s)\n", args.nbr_phils);
-	printf("Time to die = %d\n", args.tm_die);
-	printf("Time to eat = %d\n", args.tm_eat);
-	printf("Time to sleep = %d\n", args.tm_sleep);
-	if (args.nbr_meals != 0)
-		printf("Nbr of meals per phil = %d\n", args.nbr_meals);
-}
-
-long long int	ft_current_time(void)
-{
-	struct timeval	current_time;
-
-	gettimeofday(&current_time, NULL);
-	return ((current_time.tv_sec * 1000000) + current_time.tv_usec);
-}
-
 void	ft_usleep(unsigned int time)
 {
 	struct timeval	current_time;
@@ -61,7 +43,7 @@ void	ft_usleep(unsigned int time)
 	}
 }
 
-int	check_order(t_philo *philo, int i)
+int	check_order(t_philo_perso philo, int i)
 {
 	/// checker si dans la pile au dessus de i : ///
 	/// il y a i +1 ou i -1, ///
@@ -71,11 +53,11 @@ int	check_order(t_philo *philo, int i)
 	/// checker si c'est le philo 0 ou le philo n ///
 	int	top_index;
 
-	top_index = philo->stack->size_max - philo->stack->top_index - 1;
-	while (philo->stack->tableau[top_index] != i)
+	top_index = philo.main_phi->stack->size_max - philo.main_phi->stack->top_index - 1;
+	while (philo.main_phi->stack->tableau[top_index] != i)
 	{
-		if (philo->stack->tableau[top_index] == i -1
-			|| philo->stack->tableau[top_index] == i +1)
+		if (philo.main_phi->stack->tableau[top_index] == i -1
+			|| philo.main_phi->stack->tableau[top_index] == i +1)
 			return (0);
 		else
 			top_index--;
@@ -83,133 +65,102 @@ int	check_order(t_philo *philo, int i)
 	return (1);
 }
 
-int	try_eat(t_philo *philo)
+void	ft_sleep(t_philo_perso philo, long long int rl_tm)
+{
+	printf("%lld %d is sleeping\n", ft_current_time() - rl_tm, philo.index);
+	ft_usleep(philo.main_phi->data.tm_sleep);
+}
+
+void	think(t_philo_perso philo, long long int st_time, long long int rl_tm)
+{
+	pthread_mutex_lock(&philo.printf_mutex);
+	printf("%lld %d is thinking\n", ft_current_time() - st_time, philo.index);
+	pthread_mutex_unlock(&philo.printf_mutex);
+}
+
+void	eat(t_philo_perso philo, long long int starting_time, long long int rl_tm)
 {
 	int	i;
 
-	i = *philo->index;
+	i = philo.index;
+	pthread_mutex_lock(&philo.main_phi->mutex_tab[i]);
+	philo.main_phi->forks_tab[i] = 0;
+	printf("%lld %d has taken a fork\n", ft_current_time() - rl_tm, i);
+	pthread_mutex_unlock(&philo.main_phi->mutex_tab[i]);
 	if (i == 0)
 	{
-		if ((philo->forks_tab[i] == 1
-		&& philo->forks_tab[philo->data.nbr_phils] == 1)
-		&& check_order(philo, i) == 1)
-		{
-			return (1);
-		}
-		else
-			return (0);
+		pthread_mutex_lock(&philo.main_phi->mutex_tab[philo.main_phi->data.nbr_phils -1]);
+		philo.main_phi->forks_tab[philo.main_phi->data.nbr_phils -1] = 0;
+		printf("%lld %d has taken a fork\n", ft_current_time() - rl_tm, i);
+		pthread_mutex_unlock(&philo.main_phi->mutex_tab[philo.main_phi->data.nbr_phils -1]);
 	}
 	else
 	{
-		if ((philo->forks_tab[i] == 1
-			&& philo->forks_tab[i -1] == 1)
-			&& check_order(philo, i) == 1)
-		{
-			return (1);
-		}
-		else
-			return (0);
+		pthread_mutex_lock(&philo.main_phi->mutex_tab[i -1]);
+		philo.main_phi->forks_tab[i -1] = 0;
+		printf("%lld %d has taken a fork\n", ft_current_time() - rl_tm, i);
+		pthread_mutex_unlock(&philo.main_phi->mutex_tab[i -1]);
 	}
+	starting_time = ft_current_time();
+	printf("%lld %d is eating\n", ft_current_time() - rl_tm, i);
+	ft_usleep(philo.main_phi->data.tm_eat);
+	philo.main_phi->forks_tab[i] = 1;
+	if (i == 0)
+		philo.main_phi->forks_tab[philo.main_phi->data.nbr_phils -1] = 1;
+	else
+		philo.main_phi->forks_tab[i -1] = 1;
+	ft_sleep(philo, rl_tm);
 }
 
-void	ft_sleep(t_philo *philo)
-{
-	printf("%lld %d is sleeping\n", ft_current_time(), *philo->index);
-	ft_usleep(philo->data.tm_sleep);
-}
-
-void	eat(t_philo *philo, long long int real_time)
-{
-	int				i;
-
-	i = *philo->index;
-	pthread_mutex_lock(&philo->mutex_tab[i]);
-	philo->forks_tab[i] = 0;
-	printf("%lld %d has taken a fork\n", ft_current_time(), i);
-	philo->forks_tab[i -1] = 0;
-	printf("%lld %d has taken a fork\n", ft_current_time(), i);
-	real_time = ft_current_time();
-	printf("%lld %d is eating\n", ft_current_time(), i);
-	ft_usleep(philo->data.tm_eat);
-	philo->forks_tab[i] = 1;
-	philo->forks_tab[i -1] = 1;
-	pthread_mutex_unlock(&philo->mutex_tab[i]);
-	ft_rotate_a(philo->stack);
-	ft_sleep(philo);
-}
-
-void	think(t_philo *philo)
-{
-	printf("%lld %d is thinking\n", ft_current_time(), *philo->index);
-}
-
-void	*start_philo(void *philo)
-{
-	t_philo			philo_data;
-	struct timeval	current_time;
-	long long int	real_time;
-
-	philo_data = *(t_philo *)philo;
-	gettimeofday(&current_time, NULL);
-	real_time = (current_time.tv_sec * 1000000) + current_time.tv_usec;
-	while (1)
-	{	
-		gettimeofday(&current_time, NULL);
-		if (((current_time.tv_sec * 1000000) + current_time.tv_usec)
-			- real_time >= philo_data.data.tm_die * 1000)
-			break ;
-		else
-		{
-			if (try_eat(philo) == 1)
-				eat(philo, real_time);
-			else
-				think(philo);
-		}
-	}
-	printf("%lld %d died\n", ft_current_time(), *philo_data.index);
-	free(philo_data.index);
-
-	///enclencher time to die///
-	///est ce que je peux manger///
-		///oui : fonction eat///
-			///fontion eat///
-			///enclencher time to eat///
-			///fonction sleep///
-		///non : fonction think///
-}
-
-t_stack	*create_stack(int size)
-{
-	t_stack	*stack;
-
-	stack = (t_stack *)malloc(sizeof(t_stack));
-	stack->size_max = size;
-	stack->top_index = size;
-	stack->tableau = (int *)malloc(sizeof(int) * size);
-	return (stack);
-}
-
-t_stack	*create_stack_tab(t_stack *pile_a, t_philo *philo)
+void	try_eat(t_philo_perso philo, long long int starting_time, long long int rl_tm)
 {
 	int	i;
 
-	i = 0;
-	pile_a = create_stack(philo->data.nbr_phils);
-	while (i != philo->data.nbr_phils)
+	i = philo.index;
+	if (i == 0)
 	{
-		pile_a->top_index--;
-		pile_a->tableau[pile_a->top_index] = i;
-		i++;
+		if ((philo.main_phi->forks_tab[i] == 1
+		&& philo.main_phi->forks_tab[philo.main_phi->data.nbr_phils -1] == 1))
+		{
+			eat(philo, starting_time, rl_tm);
+		}
+		else
+			think(philo, starting_time, rl_tm);
 	}
-	return (pile_a);
+	else
+	{
+		if ((philo.main_phi->forks_tab[i] == 1
+			&& philo.main_phi->forks_tab[i -1] == 1))
+		{
+			eat(philo, starting_time, rl_tm);
+		}
+		else
+			think(philo, starting_time, rl_tm);
+	}
 }
 
-void	*start_philo2(void *arg)
+void	*start_philo(void *arg)
 {
-	t_philo	philo;
+	t_philo_perso	philo;
+	long long	int	starting_time;
+	long long	int	real_time;
+	struct timeval	current_time;
 
-	philo = *(t_philo *)arg;
-	printf("created n'%d\n", philo.tab[].index);
+	philo = *(t_philo_perso *)arg;
+	while (philo.main_phi->index != (philo.main_phi->data.nbr_phils -1))
+		gettimeofday(&current_time, NULL);
+	real_time = ft_current_time();
+	starting_time = ft_current_time();
+	if (philo.index % 2 != 0)
+		ft_usleep(20);
+	while (ft_current_time() - starting_time <= philo.main_phi->data.tm_die)
+	{
+		gettimeofday(&current_time, NULL);
+		if (philo.is_thinking == 0)
+			try_eat(philo, starting_time, real_time);
+	}
+	printf("%lld %d died\n", ft_current_time() - real_time, philo.index);
+	return (0);
 }
 
 t_philo	ft_philo_struct(int argc, char **argv)
@@ -219,9 +170,6 @@ t_philo	ft_philo_struct(int argc, char **argv)
 
 	n = 0;
 	philo.data = ft_init_args(argc, argv);
-	philo.phil_tab = (pthread_t *)malloc(sizeof(pthread_t) * philo.data.nbr_phils);
-	philo.mutex_tab = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t)
-		* philo.data.nbr_phils);
 	philo.stack = create_stack_tab(philo.stack, &philo);
 	philo.forks_tab = (int *)malloc(sizeof(int) * philo.data.nbr_phils);
 	while (n != philo.data.nbr_phils)
@@ -247,9 +195,10 @@ int	philo(int argc, char **argv)
 	i = 0;
 	while (i != philo.data.nbr_phils)
 	{
-		philo.real_index = i;
 		philo.tab[i].index = i;
-		if (pthread_create(&philo.phil_tab[i], NULL, &start_philo2, &philo) != 0)
+		philo.index = i;
+		philo.tab[i].main_phi = &philo;
+		if (pthread_create(&philo.tab[i].thread_index, NULL, &start_philo, &philo.tab[i]) != 0)
 		{
 			perror("Failed to create thread\n");
 			return (1);
@@ -260,7 +209,7 @@ int	philo(int argc, char **argv)
 	i = 0;
 	while (i != philo.data.nbr_phils)
 	{
-		if (pthread_join(philo.phil_tab[i], NULL) != 0)
+		if (pthread_join(philo.tab[i].thread_index, NULL) != 0)
 			return (2);
 		printf("Thread %d died\n", i);
 		i++;

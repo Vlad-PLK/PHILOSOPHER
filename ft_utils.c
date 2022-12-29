@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:10:54 by vpolojie          #+#    #+#             */
-/*   Updated: 2022/12/19 17:32:30 by vpolojie         ###   ########.fr       */
+/*   Updated: 2022/12/29 16:02:29 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,4 +54,38 @@ void	ft_rotate_a(t_stack *a)
 		a->tableau[v_haut -1] = temp;
 		v_haut--;
 	}
+}
+
+t_stack	*create_stack(int size)
+{
+	t_stack	*stack;
+
+	stack = (t_stack *)malloc(sizeof(t_stack));
+	stack->size_max = size;
+	stack->top_index = size;
+	stack->tableau = (int *)malloc(sizeof(int) * size);
+	return (stack);
+}
+
+t_stack	*create_stack_tab(t_stack *pile_a, t_philo *philo)
+{
+	int	i;
+
+	i = 0;
+	pile_a = create_stack(philo->data.nbr_phils);
+	while (i != philo->data.nbr_phils)
+	{
+		pile_a->top_index--;
+		pile_a->tableau[pile_a->top_index] = i;
+		i++;
+	}
+	return (pile_a);
+}
+
+long long int	ft_current_time(void)
+{
+	struct timeval	current_time;
+
+	gettimeofday(&current_time, NULL);
+	return ((current_time.tv_sec * 1000) + current_time.tv_usec / 1000);
 }
