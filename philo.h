@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:06:49 by vpolojie          #+#    #+#             */
-/*   Updated: 2022/12/19 17:33:25 by vpolojie         ###   ########.fr       */
+/*   Updated: 2022/12/26 17:42:36 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,17 +34,24 @@ typedef struct s_phil_args
 	int	nbr_meals;
 }t_phil_args;
 
+typedef struct s_philo_perso
+{
+	int	index;
+}t_philo_perso;
+
 typedef struct s_philo
 {
-	pthread_t	*phil_tab;
-	pthread_mutex_t *mutex_tab;
-	t_phil_args	*data;
-	t_stack		*stack;
-	int			*forks_tab;
-	int			*index;
+	pthread_t			*phil_tab;
+	pthread_mutex_t		*mutex_tab;
+	t_philo_perso		tab[201];
+	t_phil_args			data;
+	t_stack				*stack;
+	int					*forks_tab;
+	int					*index;
+	int					real_index;
 }t_philo;
 
-int	ft_atoi(const char *str);
+int		ft_atoi(const char *str);
 void	ft_rotate_a(t_stack *a);
 
 #endif
