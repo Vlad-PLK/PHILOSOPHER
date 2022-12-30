@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:06:49 by vpolojie          #+#    #+#             */
-/*   Updated: 2022/12/29 18:56:35 by vpolojie         ###   ########.fr       */
+/*   Updated: 2022/12/30 17:46:36 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,10 @@ typedef struct s_philo_perso
 	pthread_t		thread_index;
 	pthread_mutex_t	printf_mutex;
 	int				is_thinking;
+	int				eat_state;
 	int				index;
+	long long int	starting_time;
+	int				test;
 	struct s_philo	*main_phi;
 }t_philo_perso;
 
@@ -49,6 +52,7 @@ typedef struct s_philo
 	t_philo_perso		tab[201];
 	t_phil_args			data;
 	t_stack				*stack;
+	int					is_dead;
 	long long int		real_time;
 	int					index;
 	int					*forks_tab;
@@ -59,5 +63,6 @@ void			ft_rotate_a(t_stack *a);
 t_stack			*create_stack(int size);
 t_stack			*create_stack_tab(t_stack *pile_a, t_philo *philo);
 long long int	ft_current_time(void);
+void			try_eat(t_philo_perso *philo, long long int rl_tm);
 
 #endif

@@ -6,7 +6,7 @@
 #    By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/30 13:09:38 by vpolojie          #+#    #+#              #
-#    Updated: 2022/12/23 15:14:58 by vpolojie         ###   ########.fr        #
+#    Updated: 2022/12/30 13:51:50 by vpolojie         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,10 +23,10 @@ RM = rm -f
 CFLAGS = -Wall -Wextra -Werror
 
 .c.o:
-	${CC} -c $< -o ${<:.c=.o}
+	${CC} ${CFLAGS} -c $< -o ${<:.c=.o}
 
 ${NAME}:	${OBJS}
-				${CC} -g $^ -o $@
+				${CC} ${CFLAGS} -g $^ -o $@
 
 all:	${NAME};
 
