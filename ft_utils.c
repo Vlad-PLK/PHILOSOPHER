@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:10:54 by vpolojie          #+#    #+#             */
-/*   Updated: 2022/12/29 16:02:29 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/03 18:16:59 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,51 +41,59 @@ int	ft_atoi(const char *str)
 	return (str0);
 }
 
-void	ft_rotate_a(t_stack *a)
-{
-	int	temp;
-	int	v_haut;
-
-	v_haut = (a->size_max) - (a->top_index) - 1;
-	while (v_haut != 0)
-	{
-		temp = a->tableau[v_haut];
-		a->tableau[v_haut] = a->tableau[v_haut -1];
-		a->tableau[v_haut -1] = temp;
-		v_haut--;
-	}
-}
-
-t_stack	*create_stack(int size)
-{
-	t_stack	*stack;
-
-	stack = (t_stack *)malloc(sizeof(t_stack));
-	stack->size_max = size;
-	stack->top_index = size;
-	stack->tableau = (int *)malloc(sizeof(int) * size);
-	return (stack);
-}
-
-t_stack	*create_stack_tab(t_stack *pile_a, t_philo *philo)
-{
-	int	i;
-
-	i = 0;
-	pile_a = create_stack(philo->data.nbr_phils);
-	while (i != philo->data.nbr_phils)
-	{
-		pile_a->top_index--;
-		pile_a->tableau[pile_a->top_index] = i;
-		i++;
-	}
-	return (pile_a);
-}
-
 long long int	ft_current_time(void)
 {
 	struct timeval	current_time;
 
 	gettimeofday(&current_time, NULL);
 	return ((current_time.tv_sec * 1000) + current_time.tv_usec / 1000);
+}
+
+t_phil_args	ft_init_args(int argc, char **argv)
+{
+	t_phil_args	args;
+
+	args.nbr_phils = ft_atoi(argv[1]);
+	args.tm_die = ft_atoi(argv[2]);
+	args.tm_eat = ft_atoi(argv[3]);
+	args.tm_sleep = ft_atoi(argv[4]);
+	if (argc == 6)
+		args.nbr_meals = ft_atoi(argv[5]);
+	else
+		args.nbr_meals = 0;
+	return (args);
+}
+
+int	ft_usleep(unsigned int time, t_philo_perso *philo)
+{
+	struct timeval	current_time;
+	long long int	real_time;
+
+	gettimeofday(&current_time, NULL);
+	real_time = (current_time.tv_sec * 1000000) + current_time.tv_usec;
+	while (1)
+	{
+		gettimeofday(&current_time, NULL);
+		if (ft_current_time() - philo->starting_time >= philo->main_phi->data.tm_die)
+			return (-1);
+		if (((current_time.tv_sec * 1000000) + current_time.tv_usec) - real_time >= time * 1000)
+			return (1);
+		usleep(100);
+	}
+}
+
+t_philo	ft_philo_struct(int argc, char **argv)
+{
+	t_philo	philo;
+	int		n;
+
+	n = 0;
+	philo.data = ft_init_args(argc, argv);
+	philo.forks_tab = (int *)malloc(sizeof(int) * philo.data.nbr_phils);
+	while (n != philo.data.nbr_phils)
+	{
+		philo.forks_tab[n] = 1;
+		n++;
+	}
+	return (philo);
 }
