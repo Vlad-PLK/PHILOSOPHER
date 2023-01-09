@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/30 13:08:37 by vpolojie          #+#    #+#             */
-/*   Updated: 2023/01/03 19:07:35 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/05 14:20:09 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,11 +35,29 @@ void	think(t_philo_perso *philo)
 	return ;
 }
 
+int	check_meals(t_philo_perso *philo)
+{
+	int	i;
+
+	i = 0;
+	while (i != (philo->main_phi->data.nbr_phils -1))
+	{
+		if (philo->main_phi->tab[i].meals == philo->main_phi->data.nbr_meals)
+			i++;
+		else
+			return (-1);
+	}
+	philo->main_phi->all_meals = 1;
+	return (1);
+}
+
 int	eat(t_philo_perso *philo)
 {
 	int	i;
 
 	i = philo->index;
+	if (check_meals(philo) == 1)
+		return (-1);
 	pthread_mutex_lock(&philo->main_phi->mutex_tab[i]);
 	philo->main_phi->forks_tab[i] = 0;
 	printf("%lld %d has taken a fork\n", ft_current_time() - philo->real_time, i);
@@ -58,6 +76,9 @@ int	eat(t_philo_perso *philo)
 	printf("%lld %d is eating\n", ft_current_time() - philo->real_time, i);
 	if (ft_usleep(philo->main_phi->data.tm_eat, philo) == -1)
 		return (-1);
+	philo->meals++;
+	if (check_meals(philo) == 1)
+		return (-1);
 	philo->starting_time = ft_current_time();
 	philo->main_phi->forks_tab[i] = 1;
 	pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
@@ -69,22 +90,16 @@ int	eat(t_philo_perso *philo)
 		pthread_mutex_unlock(&philo->main_phi->mutex_tab[philo->main_phi->data.nbr_phils -1]);
 	else
 		pthread_mutex_unlock(&philo->main_phi->mutex_tab[i -1]);
-	philo->meals++;
 	philo->is_thinking = 0;
-	if (philo->meals != philo->main_phi->data.nbr_meals)
-	{
-		if (ft_sleep(philo) == -1)
-			return (-1);
-	}
+	printf("I am philo n'%d and i have eat %d times\n", philo->index, philo->meals);
+	ft_sleep(philo);
 	return (1);
 }
 
 int	try_eat(t_philo_perso *philo)
 {
-	int	i;
-
-	i = philo->index;
-	if (philo->main_phi->is_dead != 1)
+	check_meals(philo);
+	if (philo->main_phi->is_dead != 1 && philo->main_phi->all_meals != 1)
 	{
 		think(philo);
 		if (eat(philo) == -1)
@@ -93,21 +108,6 @@ int	try_eat(t_philo_perso *philo)
 			return (1);
 	}
 	return (-1);
-}
-
-int	check_meals(t_philo_perso *philo)
-{
-	int	i;
-
-	i = 0;
-	while (i != (philo->main_phi->data.nbr_phils -1))
-	{
-		if (philo->main_phi->tab[i].meals == philo->main_phi->data.nbr_meals)
-			i++;
-		else
-			return (-1);
-	}
-	return (1);
 }
 
 void	*start_philo(void *arg)
@@ -133,11 +133,9 @@ void	*start_philo(void *arg)
 			think(philo);
 		else
 		{
-			if (check_nb_meals(philo) == 1)
-				return (0);
 			if (try_eat(philo) == -1)
 			{
-				if (philo->main_phi->is_dead == 1)
+				if (philo->main_phi->is_dead == 1 || philo->main_phi->all_meals == 1)
 					return (0);
 				else
 					break ;
@@ -161,6 +159,7 @@ int	philo(int argc, char **argv)
 	philo = ft_philo_struct(argc, argv);
 	i = 0;
 	philo.is_dead = 0;
+	philo.all_meals = 0;
 	pthread_mutex_init(&philo.dead_mutex, NULL);
 	while (i != philo.data.nbr_phils)
 	{
