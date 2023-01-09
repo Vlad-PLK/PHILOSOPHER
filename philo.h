@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:06:49 by vpolojie          #+#    #+#             */
-/*   Updated: 2023/01/05 14:08:48 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/09 15:36:23 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,8 @@ typedef struct s_philo
 	pthread_mutex_t		dead_mutex;
 	t_philo_perso		tab[201];
 	t_phil_args			data;
-	int					is_dead;
 	int					all_meals;
+	int					is_dead;
 	int					index;
 	int					*forks_tab;
 }t_philo;
