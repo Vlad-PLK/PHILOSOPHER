@@ -6,7 +6,7 @@
 #    By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/30 13:09:38 by vpolojie          #+#    #+#              #
-#    Updated: 2023/01/09 18:27:07 by vpolojie         ###   ########.fr        #
+#    Updated: 2022/12/30 13:51:50 by vpolojie         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -20,13 +20,13 @@ CC = gcc
 
 RM = rm -f
 
-CFLAGS = -Wall -Wextra -Werror -g
+CFLAGS = -Wall -Wextra -Werror
 
 .c.o:
 	${CC} ${CFLAGS} -c $< -o ${<:.c=.o}
 
 ${NAME}:	${OBJS}
-				${CC} ${CFLAGS} $^ -o $@
+				${CC} ${CFLAGS} -g $^ -o $@
 
 all:	${NAME};
 
