@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/30 13:08:37 by vpolojie          #+#    #+#             */
-/*   Updated: 2023/01/11 08:51:46 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/12 13:02:53 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,43 +51,91 @@ int	check_meals(t_philo_perso *philo)
 	return (1);
 }
 
+int	ft_first_philo(t_philo_perso *philo, int i)
+{
+	int	first;
+
+	first = philo->main_phi->data.nbr_phils -1;
+	pthread_mutex_lock(&philo->main_phi->mutex_tab[first]);
+	if (philo->main_phi->forks_tab[first] == 1)
+	{
+		printf("%lld %d has taken a fork\n",
+			ft_current_time() - philo->real_time, i);
+		printf("%lld %d is eating\n", ft_current_time() - philo->real_time, i);
+	}
+	philo->main_phi->forks_tab[first] = 0;
+	philo->meals++;
+	printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
+	//if (check_meals(philo) == 1)
+	//	return (-1);
+	//printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
+	if (ft_usleep(philo->main_phi->data.tm_eat, philo) == -1)
+	{
+		pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
+		pthread_mutex_unlock(&philo->main_phi->mutex_tab[first]);
+		return (-1);
+	}
+	philo->starting_time = ft_current_time();
+	philo->main_phi->forks_tab[i] = 1;
+	pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
+	philo->main_phi->forks_tab[philo->main_phi->data.nbr_phils -1] = 1;
+	pthread_mutex_unlock(&philo->main_phi->mutex_tab[first]);
+	return (1);
+}
+
+int	ft_others_philo(t_philo_perso *philo, int i)
+{
+	pthread_mutex_lock(&philo->main_phi->mutex_tab[i -1]);
+	if (philo->main_phi->forks_tab[i -1] == 1)
+	{
+		printf("%lld %d has taken a fork\n",
+			ft_current_time() - philo->real_time, i);
+		printf("%lld %d is eating\n", ft_current_time() - philo->real_time, i);
+	}
+	philo->main_phi->forks_tab[i -1] = 0;
+	philo->meals++;
+	printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
+	//if (check_meals(philo) == 1)
+	//	return (-1);
+	//printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
+	if (ft_usleep(philo->main_phi->data.tm_eat, philo) == -1)
+	{
+		pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
+		pthread_mutex_unlock(&philo->main_phi->mutex_tab[i -1]);
+		return (-1);
+	}
+	philo->starting_time = ft_current_time();
+	philo->main_phi->forks_tab[i] = 1;
+	pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
+	philo->main_phi->forks_tab[i -1] = 1;
+	pthread_mutex_unlock(&philo->main_phi->mutex_tab[i -1]);
+	return (1);
+}
+
 int	eat(t_philo_perso *philo)
 {
 	int	i;
 
 	i = philo->index;
+	if (philo->main_phi->data.nbr_meals > 0 && check_meals(philo) == 1)
+		return (-1);
 	pthread_mutex_lock(&philo->main_phi->mutex_tab[i]);
+	if (philo->main_phi->forks_tab[i] == 1)
+		printf("%lld %d has taken a fork\n",
+			ft_current_time() - philo->real_time, i);
 	philo->main_phi->forks_tab[i] = 0;
-	printf("%lld %d has taken a fork\n", ft_current_time() - philo->real_time, i);
 	if (i == 0)
 	{
-		pthread_mutex_lock(&philo->main_phi->mutex_tab[philo->main_phi->data.nbr_phils -1]);
-		philo->main_phi->forks_tab[philo->main_phi->data.nbr_phils -1] = 0;
-		printf("%lld %d has taken a fork\n", ft_current_time() - philo->real_time, i);
+		if (ft_first_philo(philo, i) == -1)
+			return (-1);
 	}
 	else
 	{
-		pthread_mutex_lock(&philo->main_phi->mutex_tab[i -1]);
-		philo->main_phi->forks_tab[i -1] = 0;
-		printf("%lld %d has taken a fork\n", ft_current_time() - philo->real_time, i);
+		if (ft_others_philo(philo, i) == -1)
+			return (-1);
 	}
-	printf("%lld %d is eating\n", ft_current_time() - philo->real_time, i);
-	if (ft_usleep(philo->main_phi->data.tm_eat, philo) == -1)
+	if (philo->main_phi->data.nbr_meals > 0 && check_meals(philo) == 1)
 		return (-1);
-	philo->meals++;
-	if (check_meals(philo) == 1)
-		return (-1);
-	philo->starting_time = ft_current_time();
-	philo->main_phi->forks_tab[i] = 1;
-	pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
-	if (i == 0)
-		philo->main_phi->forks_tab[philo->main_phi->data.nbr_phils -1] = 1;
-	else
-		philo->main_phi->forks_tab[i -1] = 1;
-	if (i == 0)
-		pthread_mutex_unlock(&philo->main_phi->mutex_tab[philo->main_phi->data.nbr_phils -1]);
-	else
-		pthread_mutex_unlock(&philo->main_phi->mutex_tab[i -1]);
 	philo->is_thinking = 0;
 	ft_sleep(philo);
 	return (1);
@@ -95,7 +143,7 @@ int	eat(t_philo_perso *philo)
 
 int	try_eat(t_philo_perso *philo)
 {
-	if (philo->main_phi->is_dead != 1)
+	if (philo->main_phi->is_dead == 0)
 	{
 		think(philo);
 		if (eat(philo) == -1)
@@ -120,11 +168,14 @@ void	*start_philo(void *arg)
 	philo->meals = 0;
 	if (philo->index % 2 != 0)
 		ft_usleep(5, philo);
-	while (philo->main_phi->is_dead == 0)
+	while (ft_current_time() - philo->starting_time
+		<= philo->main_phi->data.tm_die)
 	{
 		gettimeofday(&current_time, NULL);
 		if (philo->main_phi->data.nbr_phils == 1)
 			think(philo);
+		//if (check_meals(philo) == 1)
+		//	return (0);
 		else
 		{
 			if (try_eat(philo) == -1)

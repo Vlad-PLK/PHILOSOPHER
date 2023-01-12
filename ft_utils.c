@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:10:54 by vpolojie          #+#    #+#             */
-/*   Updated: 2023/01/11 08:49:27 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/12 11:46:30 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,9 +74,11 @@ int	ft_usleep(unsigned int time, t_philo_perso *philo)
 	while (1)
 	{
 		gettimeofday(&current_time, NULL);
-		if (ft_current_time() - philo->starting_time >= philo->main_phi->data.tm_die)
+		if (ft_current_time() - philo->starting_time
+			>= philo->main_phi->data.tm_die)
 			return (-1);
-		if (((current_time.tv_sec * 1000000) + current_time.tv_usec) - real_time >= time * 1000)
+		if (((current_time.tv_sec * 1000000) + current_time.tv_usec)
+			- real_time >= time * 1000)
 			return (1);
 		usleep(100);
 	}
