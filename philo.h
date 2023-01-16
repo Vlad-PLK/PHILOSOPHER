@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:06:49 by vpolojie          #+#    #+#             */
-/*   Updated: 2023/01/11 08:44:06 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/16 18:36:08 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,11 @@ typedef struct s_philo
 {
 	pthread_mutex_t		mutex_tab[201];
 	pthread_mutex_t		dead_mutex;
+	pthread_mutex_t		meal_mutex;
 	t_philo_perso		tab[201];
 	t_phil_args			data;
 	int					is_dead;
+	int					alive_state;
 	int					all_meals;
 	int					index;
 	int					*forks_tab;
@@ -56,5 +58,5 @@ int				ft_usleep(unsigned int time, t_philo_perso *philo);
 int				ft_atoi(const char *str);
 long long int	ft_current_time(void);
 int				try_eat(t_philo_perso *philo);
-
+int				check_meals(t_philo_perso *philo);
 #endif

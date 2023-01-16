@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/30 13:08:37 by vpolojie          #+#    #+#             */
-/*   Updated: 2023/01/12 13:02:53 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/16 18:36:03 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,9 @@ int	ft_sleep(t_philo_perso *philo)
 {
 	if (philo->main_phi->is_dead != 1)
 	{
-		printf("%lld %d is sleeping\n", ft_current_time() - philo->real_time, philo->index);
+		if (check_meals(philo) == -1)
+			printf("%lld %d is sleeping\n",
+				ft_current_time() - philo->real_time, philo->index);
 		if (ft_usleep(philo->main_phi->data.tm_sleep, philo) == -1)
 			return (-1);
 		else
@@ -29,7 +31,9 @@ void	think(t_philo_perso *philo)
 {
 	if (philo->is_thinking == 0)
 	{
-		printf("%lld %d is thinking\n", ft_current_time() - philo->real_time, philo->index);
+		if (check_meals(philo) == -1)
+			printf("%lld %d is thinking\n",
+				ft_current_time() - philo->real_time, philo->index);
 		philo->is_thinking = 1;
 	}
 	return ;
@@ -40,14 +44,20 @@ int	check_meals(t_philo_perso *philo)
 	int	i;
 
 	i = 0;
-	while (i != (philo->main_phi->data.nbr_phils -1))
+	if (philo->main_phi->data.nbr_meals == 0)
+		return (-1);
+	pthread_mutex_lock(&philo->main_phi->meal_mutex);
+	while (i <= (philo->main_phi->data.nbr_phils -1))
 	{
-		if (philo->main_phi->tab[i].meals == philo->main_phi->data.nbr_meals)
-			i++;
-		else
+		if (philo->main_phi->tab[i].meals < philo->main_phi->data.nbr_meals)
+		{
+			pthread_mutex_unlock(&philo->main_phi->meal_mutex);
 			return (-1);
+		}
+		i++;
 	}
 	philo->main_phi->all_meals = 1;
+	pthread_mutex_unlock(&philo->main_phi->meal_mutex);
 	return (1);
 }
 
@@ -57,7 +67,8 @@ int	ft_first_philo(t_philo_perso *philo, int i)
 
 	first = philo->main_phi->data.nbr_phils -1;
 	pthread_mutex_lock(&philo->main_phi->mutex_tab[first]);
-	if (philo->main_phi->forks_tab[first] == 1)
+	if (philo->main_phi->forks_tab[first] == 1
+		&& check_meals(philo) == -1)
 	{
 		printf("%lld %d has taken a fork\n",
 			ft_current_time() - philo->real_time, i);
@@ -65,10 +76,16 @@ int	ft_first_philo(t_philo_perso *philo, int i)
 	}
 	philo->main_phi->forks_tab[first] = 0;
 	philo->meals++;
+	if (philo->main_phi->data.nbr_meals > 0)
+	{
+		if (check_meals(philo) == 1)
+		{
+			pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
+			pthread_mutex_unlock(&philo->main_phi->mutex_tab[first]);
+			return (-1);
+		}
+	}
 	printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
-	//if (check_meals(philo) == 1)
-	//	return (-1);
-	//printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
 	if (ft_usleep(philo->main_phi->data.tm_eat, philo) == -1)
 	{
 		pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
@@ -86,7 +103,8 @@ int	ft_first_philo(t_philo_perso *philo, int i)
 int	ft_others_philo(t_philo_perso *philo, int i)
 {
 	pthread_mutex_lock(&philo->main_phi->mutex_tab[i -1]);
-	if (philo->main_phi->forks_tab[i -1] == 1)
+	if (philo->main_phi->forks_tab[i -1] == 1
+		&& check_meals(philo) == -1)
 	{
 		printf("%lld %d has taken a fork\n",
 			ft_current_time() - philo->real_time, i);
@@ -94,10 +112,16 @@ int	ft_others_philo(t_philo_perso *philo, int i)
 	}
 	philo->main_phi->forks_tab[i -1] = 0;
 	philo->meals++;
+	if (philo->main_phi->data.nbr_meals > 0)
+	{
+		if (check_meals(philo) == 1)
+		{
+			pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
+			pthread_mutex_unlock(&philo->main_phi->mutex_tab[i -1]);
+			return (-1);
+		}
+	}
 	printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
-	//if (check_meals(philo) == 1)
-	//	return (-1);
-	//printf("Philo n'%d, meal n'%d\n", philo->index, philo->meals);
 	if (ft_usleep(philo->main_phi->data.tm_eat, philo) == -1)
 	{
 		pthread_mutex_unlock(&philo->main_phi->mutex_tab[i]);
@@ -117,10 +141,9 @@ int	eat(t_philo_perso *philo)
 	int	i;
 
 	i = philo->index;
-	if (philo->main_phi->data.nbr_meals > 0 && check_meals(philo) == 1)
-		return (-1);
 	pthread_mutex_lock(&philo->main_phi->mutex_tab[i]);
-	if (philo->main_phi->forks_tab[i] == 1)
+	if (philo->main_phi->forks_tab[i] == 1
+		&& check_meals(philo) == -1)
 		printf("%lld %d has taken a fork\n",
 			ft_current_time() - philo->real_time, i);
 	philo->main_phi->forks_tab[i] = 0;
@@ -143,14 +166,11 @@ int	eat(t_philo_perso *philo)
 
 int	try_eat(t_philo_perso *philo)
 {
-	if (philo->main_phi->is_dead == 0)
-	{
-		think(philo);
-		if (eat(philo) == -1)
-			return (-1);
-		else
-			return (1);
-	}
+	think(philo);
+	if (eat(philo) == -1)
+		return (-1);
+	else
+		return (1);
 	return (-1);
 }
 
@@ -169,26 +189,20 @@ void	*start_philo(void *arg)
 	if (philo->index % 2 != 0)
 		ft_usleep(5, philo);
 	while (ft_current_time() - philo->starting_time
-		<= philo->main_phi->data.tm_die)
+		<= philo->main_phi->data.tm_die || check_meals(philo) == -1)
 	{
 		gettimeofday(&current_time, NULL);
 		if (philo->main_phi->data.nbr_phils == 1)
 			think(philo);
-		//if (check_meals(philo) == 1)
-		//	return (0);
 		else
 		{
-			if (try_eat(philo) == -1)
-			{
-				if (philo->main_phi->is_dead == 1)
-					return (0);
-				else
+			if (check_meals(philo) == -1)
+				if (try_eat(philo) == -1)
 					break ;
-			}
 		}
 	}
 	pthread_mutex_lock(&philo->main_phi->dead_mutex);
-	if (philo->main_phi->is_dead == 0)
+	if (philo->main_phi->is_dead == 0 && philo->main_phi->all_meals == 0)
 		printf("%lld %d died\n", ft_current_time() - philo->real_time,
 			philo->index);
 	philo->main_phi->is_dead = 1;
@@ -202,6 +216,7 @@ void	ft_initialize_mutex(t_philo *philo)
 
 	i = 0;
 	pthread_mutex_init(&philo->dead_mutex, NULL);
+	pthread_mutex_init(&philo->meal_mutex, NULL);
 	while (i != philo->data.nbr_phils)
 	{
 		pthread_mutex_init(&philo->mutex_tab[i], NULL);
@@ -215,6 +230,7 @@ void	ft_destroy_mutex(t_philo *philo)
 
 	i = 0;
 	pthread_mutex_destroy(&philo->dead_mutex);
+	pthread_mutex_destroy(&philo->meal_mutex);
 	while (i != philo->data.nbr_phils)
 	{
 		pthread_mutex_destroy(&philo->mutex_tab[i]);
