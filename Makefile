@@ -6,13 +6,13 @@
 #    By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/11/30 13:09:38 by vpolojie          #+#    #+#              #
-#    Updated: 2022/12/30 13:51:50 by vpolojie         ###   ########.fr        #
+#    Updated: 2023/01/20 12:29:49 by vpolojie         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = philo
 
-SRCS = philo.c ft_utils.c
+SRCS = philo.c ft_utils.c main.c ft_thread_functions.c ft_actions.c
 
 OBJS = ${SRCS:.c=.o}
 

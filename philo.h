@@ -6,7 +6,7 @@
 /*   By: vpolojie <vpolojie@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/12/08 11:06:49 by vpolojie          #+#    #+#             */
-/*   Updated: 2023/01/16 18:36:08 by vpolojie         ###   ########.fr       */
+/*   Updated: 2023/01/20 11:36:28 by vpolojie         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ typedef struct s_philo
 	pthread_mutex_t		mutex_tab[201];
 	pthread_mutex_t		dead_mutex;
 	pthread_mutex_t		meal_mutex;
+	pthread_mutex_t		print_mutex;
 	t_philo_perso		tab[201];
 	t_phil_args			data;
 	int					is_dead;
@@ -58,5 +59,15 @@ int				ft_usleep(unsigned int time, t_philo_perso *philo);
 int				ft_atoi(const char *str);
 long long int	ft_current_time(void);
 int				try_eat(t_philo_perso *philo);
+int				eat(t_philo_perso *philo);
+int				ft_second_fork(t_philo_perso *philo, int i, int neighbour);
 int				check_meals(t_philo_perso *philo);
+void			ft_initialize_mutex(t_philo *philo);
+void			ft_destroy_mutex(t_philo *philo);
+int				main(int argc, char **argv);
+int				philo(int argc, char **argv);
+void			ft_join_threads(t_philo *philo);
+int				ft_sleep(t_philo_perso *philo);
+void			think(t_philo_perso *philo);
+void			ft_printf(t_philo_perso *philo, int index, char *msg);
 #endif
